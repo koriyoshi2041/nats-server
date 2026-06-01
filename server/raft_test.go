@@ -3007,7 +3007,7 @@ func TestNRGLoadLastSnapshotCleansLegacyZeroIndexSnapshot(t *testing.T) {
 		data:      []byte("legacy"),
 	}
 	sfile := filepath.Join(snapDir, fmt.Sprintf(snapFileT, legacy.lastTerm, legacy.lastIndex))
-	require_NoError(t, writeFileWithSync(sfile, n.encodeSnapshot(legacy), defaultFilePerms))
+	require_NoError(t, writeFileWithSync(n.dios, sfile, n.encodeSnapshot(legacy), defaultFilePerms))
 
 	n.Lock()
 	n.snapfile = sfile
@@ -5605,7 +5605,7 @@ func TestNRGCheckpointInstallSnapshotAbortDuringWrite(t *testing.T) {
 		drain:
 			for {
 				select {
-				case <-dios:
+				case <-n.dios.ch:
 					drained++
 				default:
 					break drain
@@ -5613,7 +5613,7 @@ func TestNRGCheckpointInstallSnapshotAbortDuringWrite(t *testing.T) {
 			}
 			refill := func() {
 				for i := 0; i < drained; i++ {
-					dios <- struct{}{}
+					n.dios.ch <- struct{}{}
 				}
 				drained = 0
 			}
